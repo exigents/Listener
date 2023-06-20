@@ -77,3 +77,73 @@ Listener:observeProperty(Part, PropertyName, function(value)
     end
 end)
 ```
+
+# Example Script
+An example of using the listener.
+```lua
+--|| Services ||--
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+--|| Listener ||--
+local Listener = require(ReplicatedStorage:WaitForChild("Listener"))
+
+--|| Player Data ||--
+Listener:observePlayer(function(player: Player)
+	local ls = Instance.new("Folder")
+	local Kills = Instance.new("NumberValue")
+	local Deaths = Instance.new("NumberValue")
+	
+	Kills.Name = "Kills"
+	Deaths.Name = "Deaths"
+	ls.Name = "leaderstats"
+	
+	Kills.Parent = ls
+	Deaths.Parent = ls
+	
+	ls.Parent = player
+	
+	return function()
+		print(player.Name.." Left or Listener stopped")
+	end
+end)
+
+Listener:observeCharacter(function(player: Player, character: Model)
+	local ls = player:FindFirstChild("leaderstats")
+	local deaths = ls:FindFirstChild("Deaths")
+	
+	local Humanoid = character:FindFirstChild("Humanoid")
+	
+	local Died: RBXScriptConnection? = nil
+	
+	Died = Humanoid.Died:Connect(function()
+		deaths.Value += 1
+	end)
+	
+	return function()
+		if Died ~= nil then
+			Died:Disconnect()
+			Died = nil
+		end
+	end
+end)
+
+--|| Kill part ||--
+Listener:observeTag("Kill", function(part)
+	local Connection: RBXScriptConnection? = nil
+	
+	Connection = part.Touched:Connect(function(hit)
+		local Parent = hit.Parent
+		
+		if Parent:FindFirstChild("Humanoid") then
+			Parent:FindFirstChild("Humanoid").Health = 0
+		end
+	end)
+	
+	return function()
+		if Connection ~= nil then
+			Connection:Disconnect()
+			Connection = nil
+		end
+	end
+end)
+```
